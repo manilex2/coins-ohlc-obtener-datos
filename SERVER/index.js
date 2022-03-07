@@ -20,9 +20,7 @@ app.get('/', async (req, res) => {
     var sql = `SELECT name FROM ${process.env.TABLE_COINS_LIST}`;
     conexion.query(sql, async function (err, resultado) {
         if (err) throw err;
-        await guardarOHLC(resultado, 1, process.env.TABLE_OHLC_MIN);
-        await guardarOHLC(resultado, 30, process.env.TABLE_OHLC_HORA);
-        await guardarOHLC(resultado, 365, process.env.TABLE_OHLC_DIA);
+        await guardarOHLC(resultado, process.env.PERIODO, process.env.TABLE_OHLC);
         await finalizarEjecucion();
     });
     async function guardarOHLC(resultado, tiempo, variable){
@@ -31,9 +29,9 @@ app.get('/', async (req, res) => {
             await fetch(`https://api.coingecko.com/api/v3/coins/${coin}/ohlc?vs_currency=usd&days=${tiempo}`)
             .then((res) => {
                 return res.json();
-            }).then(async (json) => {
+            }).then((json) => {
                 var ohlc = json;
-                await guardarBaseDeDatos(coin, ohlc, variable);
+                guardarBaseDeDatos(coin, ohlc, variable);
             }).catch((err) => {
                 console.error(err);
             });
@@ -66,7 +64,6 @@ app.get('/', async (req, res) => {
                 ) LIMIT 1`;
             conexion.query(sql, function (err, resultado) {
                 if (err) throw err;
-                console.log(resultado);
             });
         }
     };
