@@ -26,7 +26,7 @@ functions:
       DB_DATABASE: ${env:DB_DATABASE}
       TABLE_OHLCHORAS: ${env:TABLE_OHLCHORAS}
       PERIODOHORAS: ${env:PERIODOHORAS}
-      TABLE_CRIPTO: ${env:TABLE_CRIPTO}
+      TABLE_COINS_LIST: ${env:TABLE_COINS_LIST}
     events:
       - eventBridge:
           schedule: cron(0 15 ? * * *)
@@ -45,7 +45,7 @@ functions:
       DB_DATABASE: ${env:DB_DATABASE}
       TABLE_OHLCDIAS: ${env:TABLE_OHLCHORAS}
       PERIODODIAS: ${env:PERIODOHORAS}
-      TABLE_CRIPTO: ${env:TABLE_CRIPTO}
+      TABLE_COINS_LIST: ${env:TABLE_COINS_LIST}
     events:
       - eventBridge:
           schedule: cron(0 15 ? * * *)
