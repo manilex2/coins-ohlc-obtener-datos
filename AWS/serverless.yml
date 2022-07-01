@@ -1,0 +1,51 @@
+# serverless.yml
+
+service: coins-ohlc-obtener-datos
+useDotenv: true
+
+provider:
+  name: aws
+  runtime: nodejs16.x
+  region: us-east-2
+  stage: prod
+    
+
+functions:
+  obtenerOHLC4horas:
+    handler: index.handler
+    memorySize: 1024
+    name: obtenerOHLC4horas
+    description: LCF7 - Función que toma de la base de datos las criptos, obtiene el OHLC y los pasa a la base de datos.
+    timeout: 720
+    maximumRetryAttempts: 0
+    environment:
+      DB_HOST: ${env:DB_HOST}
+      DB_USER: ${env:DB_USER}
+      DB_PASSWORD: ${env:DB_PASSWORD}
+      DB_PORT: ${env:DB_PORT}
+      DB_DATABASE: ${env:DB_DATABASE}
+      TABLE_OHLCHORAS: ${env:TABLE_OHLCHORAS}
+      PERIODOHORAS: ${env:PERIODOHORAS}
+      TABLE_CRIPTO: ${env:TABLE_CRIPTO}
+    events:
+      - eventBridge:
+          schedule: cron(0 15 ? * * *)
+  obtenerOHLC4dias:
+    handler: index.handler
+    memorySize: 1024
+    name: obtenerOHLC4dias
+    description: LCF8 - Función que toma de la base de datos las criptos, obtiene el OHLC y los pasa a la base de datos.
+    timeout: 720
+    maximumRetryAttempts: 0
+    environment:
+      DB_HOST: ${env:DB_HOST}
+      DB_USER: ${env:DB_USER}
+      DB_PASSWORD: ${env:DB_PASSWORD}
+      DB_PORT: ${env:DB_PORT}
+      DB_DATABASE: ${env:DB_DATABASE}
+      TABLE_OHLCDIAS: ${env:TABLE_OHLCHORAS}
+      PERIODODIAS: ${env:PERIODOHORAS}
+      TABLE_CRIPTO: ${env:TABLE_CRIPTO}
+    events:
+      - eventBridge:
+          schedule: cron(0 15 ? * * *)
