@@ -43,8 +43,8 @@ functions:
       DB_PASSWORD: ${env:DB_PASSWORD}
       DB_PORT: ${env:DB_PORT}
       DB_DATABASE: ${env:DB_DATABASE}
-      TABLE_OHLCDIAS: ${env:TABLE_OHLCHORAS}
-      PERIODODIAS: ${env:PERIODOHORAS}
+      TABLE_OHLCDIAS: ${env:TABLE_OHLCDIAS}
+      PERIODODIAS: ${env:PERIODODIAS}
       TABLE_COINS_LIST: ${env:TABLE_COINS_LIST}
     events:
       - eventBridge:
