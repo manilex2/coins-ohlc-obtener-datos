@@ -8,9 +8,29 @@ provider:
   runtime: nodejs16.x
   region: us-east-2
   stage: prod
+  environment:
+      DB_HOST: ${env:DB_HOST}
+      DB_USER: ${env:DB_USER}
+      DB_PASSWORD: ${env:DB_PASSWORD}
+      DB_PORT: ${env:DB_PORT}
+      DB_DATABASE: ${env:DB_DATABASE}
+      TABLE_COINS_LIST: ${env:TABLE_COINS_LIST}
     
 
 functions:
+  obtenerOHLC30minutos:
+    handler: index.handler
+    memorySize: 1024
+    name: obtenerOHLC30minutos
+    description: LCF6 - Función que toma de la base de datos las criptos, obtiene el OHLC y los pasa a la base de datos.
+    timeout: 720
+    maximumRetryAttempts: 0
+    environment:
+      TABLE_OHLC: ${env:TABLE_OHLCMINS}
+      PERIODO: ${env:PERIODOMINS}
+    events:
+      - eventBridge:
+          schedule: cron(0 15 ? * * *)
   obtenerOHLC4horas:
     handler: index.handler
     memorySize: 1024
@@ -19,14 +39,8 @@ functions:
     timeout: 720
     maximumRetryAttempts: 0
     environment:
-      DB_HOST: ${env:DB_HOST}
-      DB_USER: ${env:DB_USER}
-      DB_PASSWORD: ${env:DB_PASSWORD}
-      DB_PORT: ${env:DB_PORT}
-      DB_DATABASE: ${env:DB_DATABASE}
-      TABLE_OHLCHORAS: ${env:TABLE_OHLCHORAS}
-      PERIODOHORAS: ${env:PERIODOHORAS}
-      TABLE_COINS_LIST: ${env:TABLE_COINS_LIST}
+      TABLE_OHLC: ${env:TABLE_OHLCHORAS}
+      PERIODO: ${env:PERIODOHORAS}
     events:
       - eventBridge:
           schedule: cron(0 15 ? * * *)
@@ -38,14 +52,8 @@ functions:
     timeout: 720
     maximumRetryAttempts: 0
     environment:
-      DB_HOST: ${env:DB_HOST}
-      DB_USER: ${env:DB_USER}
-      DB_PASSWORD: ${env:DB_PASSWORD}
-      DB_PORT: ${env:DB_PORT}
-      DB_DATABASE: ${env:DB_DATABASE}
-      TABLE_OHLCDIAS: ${env:TABLE_OHLCDIAS}
-      PERIODODIAS: ${env:PERIODODIAS}
-      TABLE_COINS_LIST: ${env:TABLE_COINS_LIST}
+      TABLE_OHLC: ${env:TABLE_OHLCDIAS}
+      PERIODO: ${env:PERIODODIAS}
     events:
       - eventBridge:
           schedule: cron(0 15 ? * * *)
