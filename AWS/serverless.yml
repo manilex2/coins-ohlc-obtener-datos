@@ -15,6 +15,8 @@ provider:
       DB_PORT: ${env:DB_PORT}
       DB_DATABASE: ${env:DB_DATABASE}
       TABLE_COINS_LIST: ${env:TABLE_COINS_LIST}
+      NUM_GRUPOS: ${env:NUM_GRUPOS}
+      DELAY: ${env:DELAY}
     
 
 functions:
