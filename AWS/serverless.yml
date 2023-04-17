@@ -18,7 +18,6 @@ provider:
       NUM_GRUPOS: ${env:NUM_GRUPOS}
       DELAY: ${env:DELAY}
     
-
 functions:
   obtenerOHLC30minutos:
     handler: index.handler
@@ -32,7 +31,7 @@ functions:
       PERIODO: ${env:PERIODOMINS}
     events:
       - eventBridge:
-          schedule: cron(0 11,13,15,17,19,21,23,01,03 ? * * *)
+          schedule: cron(0,20,40 11,13,15,17,19,21,23,01,03 ? * * *)
   obtenerOHLC4horas:
     handler: index.handler
     memorySize: 1024
@@ -45,7 +44,7 @@ functions:
       PERIODO: ${env:PERIODOHORAS}
     events:
       - eventBridge:
-          schedule: cron(0 15 ? * * *)
+          schedule: cron(0,20,40 15 ? * * *)
   obtenerOHLC4dias:
     handler: index.handler
     memorySize: 1024
@@ -58,4 +57,4 @@ functions:
       PERIODO: ${env:PERIODODIAS}
     events:
       - eventBridge:
-          schedule: cron(0 15 ? * * *)
+          schedule: cron(0,20,40 15 ? * * *)

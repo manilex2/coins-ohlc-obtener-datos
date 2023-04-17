@@ -6,8 +6,10 @@
   "author": "Manuel Pereira",
   "license": "ISC",
   "dependencies": {
+    "bluebird": "^3.7.2",
     "dotenv": "^16.0.0",
     "mysql2": "^2.3.3",
-    "node-fetch": "^2.6.7"
+    "node-fetch": "^2.6.7",
+    "sequelize": "^6.31.0"
   }
 }

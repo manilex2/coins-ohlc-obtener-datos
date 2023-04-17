@@ -1,87 +1,105 @@
 require('dotenv').config();
-const mysql = require('mysql2');
 const fetch = require('node-fetch');
-const { database } = require('./keys');
+const connectToDatabase = require("./database");
 
 exports.handler = async function (event) {
     const promise = new Promise(async function() {
-        const conexion = mysql.createConnection({
-            host: database.host,
-            user: database.user,
-            password: database.password,
-            port: database.port,
-            database: database.database
+        const { Coins, OHLC, Op } = await connectToDatabase();
+        var coins = await Coins.findAll({
+            attributes: ["name"]
         });
-        var sql = `SELECT name FROM ${process.env.TABLE_COINS_LIST}`;
+        var coinNames = coins.map((coin) => coin.name);
+        var grupo = Math.floor(coinNames.length/process.env.NUM_GRUPOS);
+        var contador = grupo;
+        var cantGrupos = [contador];
+        while (contador < coinNames.length) {
+            contador = contador + grupo;
+            cantGrupos.push(contador);
+        }
+        if (contador > coinNames.length) {
+            cantGrupos.pop();
+            cantGrupos.push(coinNames.length);
+        }
+        console.log(cantGrupos);
+        var inicio = 0;
+        for (let i = 0; i < cantGrupos.length; i++) {
+            const fin = cantGrupos[i];
+            console.log(`Inicio: ${inicio}, Final: ${fin}`)
+            console.log(`Entre ${i+1} veces`);
+            await guardarOHLC(coinNames, inicio, fin);
+            if (i+1 < cantGrupos.length) {
+                await delay(process.env.DELAY);
+            }
+            inicio = fin;
+        }
+        if (inicio == coinNames.length) {
+            return;
+        }
         async function delay(ms) {
             return await new Promise(resolve => setTimeout(resolve, ms));
-          }
-        conexion.query(sql, async function (err, resultado) {
-            if (err) throw err;
-            var grupo = Math.floor(resultado.length/process.env.NUM_GRUPOS);
-            var contador = grupo;
-            var cantGrupos = [contador];
-            while (contador < resultado.length) {
-                contador = contador + grupo;
-                cantGrupos.push(contador);
-            }
-            if (contador > resultado.length) {
-                cantGrupos.pop();
-                cantGrupos.push(resultado.length);
-            }
-            var inicio = 0;
-            for (let i = 0; i < cantGrupos.length; i++) {
-                const fin = cantGrupos[i];
-                console.log(`Entre ${i+1} veces`);
-                await delay(process.env.DELAY);
-                guardarOHLC(resultado, inicio, fin);
-                inicio = fin;
-            }
-        });
+        }
         async function guardarOHLC(resultado, inicio, fin){
+            const nuevoArray = [];
             for (let i = inicio; i < fin; i++) {
-                var coin = resultado[i].name;
+                var coin = resultado[i];
                 await fetch(`https://api.coingecko.com/api/v3/coins/${coin}/ohlc?vs_currency=usd&days=${process.env.PERIODO}`)
                 .then((res) => {
                     return res.json();
-                }).then((json) => {
+                }).then(async (json) => {
                     var ohlc = json;
-                    guardarBaseDeDatos(coin, ohlc);
+                    configurarDatos(coin, ohlc, nuevoArray);
                 }).catch((err) => {
                     console.error(err);
                 });
             }
+            await guardarBaseDatos(nuevoArray);
         };
-        async function guardarBaseDeDatos(coin, datos){
+        function configurarDatos(coin, datos, nuevoArray) {
             for (let i = 0; i < datos.length; i++) {
                 datos[i][0] = new Date(datos[i][0]);
                 let month = datos[i][0].getMonth();
                 let monthBD = month + 1;
                 let fechaBD = datos[i][0].getFullYear() + '-' + monthBD + '-' + datos[i][0].getDate() + ' ' + datos[i][0].getHours() + ':' + datos[i][0].getMinutes() + ':' + datos[i][0].getSeconds();
-                var sql = `INSERT INTO ${process.env.TABLE_OHLC} (
-                    name,
-                    fecha, 
-                    open,
-                    high,
-                    low,
-                    close
-                    )
-                    SELECT * FROM (SELECT
-                        '${coin}' AS name,
-                        '${fechaBD}' AS fecha,
-                        ${datos[i][1]} AS open,
-                        ${datos[i][2]} AS high,
-                        ${datos[i][3]} AS low,
-                        ${datos[i][4]} AS close
-                    ) AS tmp
-                    WHERE NOT EXISTS (
-                        SELECT fecha, name FROM ${process.env.TABLE_OHLC} WHERE fecha = '${fechaBD}' AND name = '${coin}'
-                    ) LIMIT 1`;
-                conexion.query(sql, function (err, resultado) {
-                    if (err) throw err;
+                
+                nuevoArray.push({
+                    name: coin,
+                    fecha: fechaBD,
+                    open: parseFloat(datos[i][1]).toFixed(6),
+                    high: parseFloat(datos[i][2]).toFixed(6),
+                    low: parseFloat(datos[i][3]).toFixed(6),
+                    close: parseFloat(datos[i][4]).toFixed(6)
                 });
             }
+            return nuevoArray;
         };
+        async function guardarBaseDatos(data) {
+            try {
+                const ohlcs = await OHLC.bulkCreate(
+                    data.map((value) => ({
+                        name: value.name,
+                        fecha: value.fecha,
+                        open: value.open,
+                        high: value.high,
+                        low: value.low,
+                        close: value.close
+                    })),
+                    {
+                        fields: ["name", "fecha", "open", "high", "low", "close"],
+                        ignoreDuplicates: true
+                    }
+                ).then(() => {
+                    console.log("Registros creados exitosamente");
+                })
+                .catch((error) => {
+                    console.log("Ocurrio un error al crear los registros: ", error)
+                });
+            } catch (error) {
+                console.log(error);
+            }
+        }
     });
-    return promise;
+    return {
+        statusCode: 200,
+        body: "Ejecutado"
+    };
 };
