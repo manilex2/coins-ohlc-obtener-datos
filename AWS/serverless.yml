@@ -58,3 +58,11 @@ functions:
     events:
       - eventBridge:
           schedule: cron(0,20,40 15 ? * * *)
+
+plugins:
+  - serverless-offline
+
+custom:
+  serverless-offline:
+    httpPort: 3000
+    lambdaPort: 3001

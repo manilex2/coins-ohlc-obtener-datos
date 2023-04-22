@@ -4,41 +4,45 @@ const connectToDatabase = require("./database");
 
 exports.handler = async function (event) {
     const promise = new Promise(async function() {
-        const { Coins, OHLC, Op } = await connectToDatabase();
-        var coins = await Coins.findAll({
-            attributes: ["name"]
-        });
-        var coinNames = coins.map((coin) => coin.name);
-        var grupo = Math.floor(coinNames.length/process.env.NUM_GRUPOS);
-        var contador = grupo;
-        var cantGrupos = [contador];
-        while (contador < coinNames.length) {
-            contador = contador + grupo;
-            cantGrupos.push(contador);
-        }
-        if (contador > coinNames.length) {
-            cantGrupos.pop();
-            cantGrupos.push(coinNames.length);
-        }
-        console.log(cantGrupos);
-        var inicio = 0;
-        for (let i = 0; i < cantGrupos.length; i++) {
-            const fin = cantGrupos[i];
-            console.log(`Inicio: ${inicio}, Final: ${fin}`)
-            console.log(`Entre ${i+1} veces`);
-            await guardarOHLC(coinNames, inicio, fin);
-            if (i+1 < cantGrupos.length) {
-                await delay(process.env.DELAY);
+        try {
+            const { Coins, OHLC, Op } = await connectToDatabase();
+            var coins = await Coins.findAll({
+                attributes: ["name"]
+            });
+            var coinNames = coins.map((coin) => coin.name);
+            var grupo = Math.floor(coinNames.length/process.env.NUM_GRUPOS);
+            var contador = grupo;
+            var cantGrupos = [contador];
+            while (contador < coinNames.length) {
+                contador = contador + grupo;
+                cantGrupos.push(contador);
             }
-            inicio = fin;
-        }
-        if (inicio == coinNames.length) {
-            return;
+            if (contador > coinNames.length) {
+                cantGrupos.pop();
+                cantGrupos.push(coinNames.length);
+            }
+            console.log(cantGrupos);
+            var inicio = 0;
+            for (let i = 0; i < cantGrupos.length; i++) {
+                const fin = cantGrupos[i];
+                console.log(`Inicio: ${inicio}, Final: ${fin}`)
+                console.log(`Entre ${i+1} veces`);
+                await guardarOHLC(coinNames, inicio, fin, OHLC);
+                if (i+1 < cantGrupos.length) {
+                    await delay(process.env.DELAY);
+                }
+                inicio = fin;
+            }
+            if (inicio == coinNames.length) {
+                return;
+            }
+        } catch (error) {
+            console.error(error);
         }
         async function delay(ms) {
             return await new Promise(resolve => setTimeout(resolve, ms));
         }
-        async function guardarOHLC(resultado, inicio, fin){
+        async function guardarOHLC(resultado, inicio, fin, OHLC){
             const nuevoArray = [];
             for (let i = inicio; i < fin; i++) {
                 var coin = resultado[i];
@@ -52,7 +56,7 @@ exports.handler = async function (event) {
                     console.error(err);
                 });
             }
-            await guardarBaseDatos(nuevoArray);
+            await guardarBaseDatos(nuevoArray, OHLC);
         };
         function configurarDatos(coin, datos, nuevoArray) {
             for (let i = 0; i < datos.length; i++) {
@@ -72,7 +76,7 @@ exports.handler = async function (event) {
             }
             return nuevoArray;
         };
-        async function guardarBaseDatos(data) {
+        async function guardarBaseDatos(data, OHLC) {
             try {
                 const ohlcs = await OHLC.bulkCreate(
                     data.map((value) => ({
